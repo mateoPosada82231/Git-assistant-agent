@@ -29,7 +29,7 @@
 
 # MAGIC %md
 # MAGIC ### IMPORTANT
-# MAGIC **TODO**: Update the `agent.py` below with the correct catalog name and schema to align with the course catalog and schema.
+# MAGIC **TODO**: Update the `agent.py` below with the correct catalog name and schema to align with the project catalog and schema.
 # MAGIC
 # MAGIC `UC_TOOL_NAMES = ["<CATALOG NAME>.<CATALOG NAME>.*"]`
 # MAGIC
@@ -75,7 +75,7 @@
 # MAGIC ############################################
 # MAGIC LLM_ENDPOINT_NAME = "databricks-gpt-oss-120b"
 # MAGIC
-# MAGIC SYSTEM_PROMPT = """"""
+# MAGIC SYSTEM_PROMPT = "You are a helpful Git assistant. Answer questions about Git using the provided tools and documentation. Be concise and accurate."
 # MAGIC
 # MAGIC
 # MAGIC ###############################################################################
@@ -116,7 +116,7 @@
 # MAGIC TOOL_INFOS = []
 # MAGIC
 # MAGIC # You can use UDFs in Unity Catalog as agent tools
-# MAGIC UC_TOOL_NAMES = [f"workspace.genai_course.*"]
+# MAGIC UC_TOOL_NAMES = [f"workspace.git-assistnat-agent.*"]
 # MAGIC
 # MAGIC uc_toolkit = UCFunctionToolkit(function_names=UC_TOOL_NAMES)
 # MAGIC uc_function_client = get_uc_function_client()
@@ -132,7 +132,7 @@
 # MAGIC VECTOR_SEARCH_TOOLS = []
 # MAGIC VECTOR_SEARCH_TOOLS.append(
 # MAGIC         VectorSearchRetrieverTool(
-# MAGIC             index_name="workspace.genai_course.dphone_vs_index",
+# MAGIC             index_name="workspace.git-assistnat-agent.git_vs_index",
 # MAGIC             # TODO: specify index description for better agent tool selection
 # MAGIC             # tool_description=""
 # MAGIC         )
@@ -277,13 +277,13 @@
 from agent import AGENT
 
 AGENT.predict(
-    {"input": [{"role": "user", "content": "What is the screen size of dPhone D1 Fold?"}], "custom_inputs": {"session_id": "test-session-123"}},
+    {"input": [{"role": "user", "content": "How do I resolve a merge conflict?"}], "custom_inputs": {"session_id": "test-session-123"}},
 )
 
 # COMMAND ----------
 
 for chunk in AGENT.predict_stream(
-    {"input": [{"role": "user", "content": "What is the screen size of dPhone D1 Fold?"}], "custom_inputs": {"session_id": "test-session-123"}}
+    {"input": [{"role": "user", "content": "How do I resolve a merge conflict?"}], "custom_inputs": {"session_id": "test-session-123"}}
 ):
     print(chunk.model_dump(exclude_none=True))
 
@@ -317,7 +317,7 @@ input_example = {
     "input": [
         {
             "role": "user",
-            "content": "What is dPhone D1 Fold?"
+            "content": "How do I undo the last commit but keep the changes?"
         }
     ],
     "custom_inputs": {
@@ -358,7 +358,7 @@ eval_dataset = [
             "input": [
                 {
                     "role": "user",
-                    "content": "What is dPhone D1 Fold?"
+                    "content": "How do I undo the last commit but keep the changes?"
                 }
             ]
         },
@@ -400,9 +400,9 @@ mlflow.models.predict(
 mlflow.set_registry_uri("databricks-uc")
 
 # TODO: define the catalog, schema, and model name for your UC model
-catalog = course.catalog
-schema = course.schema
-model_name = "dphone_agent"
+catalog = project.catalog
+schema = project.schema
+model_name = "git_agent"
 UC_MODEL_NAME = f"{catalog}.{schema}.{model_name}"
 
 # register the model to UC

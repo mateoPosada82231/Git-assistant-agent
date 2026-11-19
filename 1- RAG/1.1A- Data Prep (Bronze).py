@@ -3,7 +3,7 @@
 
 # COMMAND ----------
 
-datasource = [f'{course.dataset_volume}/{folder}'
+datasource = [f'{project.dataset_volume}/{folder}'
               for folder in ['guias', 'matrices', 'troubleshooting']]
 print(datasource)
 

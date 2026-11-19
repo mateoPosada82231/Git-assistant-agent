@@ -4,53 +4,31 @@
 
 # COMMAND ----------
 
-# MAGIC %run ../Includes/Lab_Setup_02
+# MAGIC %run ../Includes/Lab_Setup
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM smartphones
+# MAGIC SELECT path, chunk
+# MAGIC FROM gold_docs_chunked
+# MAGIC LIMIT 5
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM inventory_stock
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC CREATE OR REPLACE FUNCTION get_latest_phone()
-# MAGIC RETURNS TABLE(phone_id INT, model STRING, color STRING, price INT)
-# MAGIC COMMENT 'Returns the latest phone, ordered by release_date descending. IMPORTANT: This function accepts ZERO parameters. Do not pass any arguments.'
+# MAGIC CREATE OR REPLACE FUNCTION search_git_docs(search_term STRING COMMENT 'Term to search in the Git documentation (string)')
+# MAGIC RETURNS TABLE(path STRING, chunk STRING)
+# MAGIC COMMENT 'Searches the Git documentation chunks for a given term and returns the matching file and text. IMPORTANT: This function accepts exactly one string parameter.'
 # MAGIC RETURN
-# MAGIC   SELECT phone_id, model, color, price
-# MAGIC   FROM smartphones
-# MAGIC   ORDER BY release_date DESC
-# MAGIC   LIMIT 1;
+# MAGIC   SELECT path, chunk
+# MAGIC   FROM gold_docs_chunked
+# MAGIC   WHERE lower(chunk) LIKE concat('%', lower(search_term), '%')
+# MAGIC   LIMIT 5;
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM get_latest_phone()
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC CREATE OR REPLACE FUNCTION check_inventory(phone_id INT COMMENT 'ID of the phone to check (integer)')
-# MAGIC RETURNS TABLE (
-# MAGIC   item_id INT,
-# MAGIC   quantity INT
-# MAGIC )
-# MAGIC COMMENT 'Checks the stock quantity for a given phone in the inventory.'
-# MAGIC RETURN
-# MAGIC   SELECT item_id, quantity
-# MAGIC   FROM inventory_stock
-# MAGIC   WHERE item_id = phone_id;
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT * FROM check_inventory(4)
+# MAGIC SELECT * FROM search_git_docs('merge conflict')
 
 # COMMAND ----------
 
@@ -67,37 +45,26 @@
 
 # COMMAND ----------
 
-def generate_checkout_url(user_id: str, phone_id: int, valid_quantity: int) -> str:
+def build_reference(path: str, chunk: str) -> str:
     """
-    Returns the checkout URL to fulfill the user's order for a phone with a given quantity.
-    The URL is valid for 30 minutes.
+    Returns a short reference string for a Git documentation chunk.
 
     Args:
-        user_id (str): Identifier of the current user/session.
-        phone_id (int): ID of the phone to buy.
-        valid_quantity (int): the requested quantity, validated against current stock
+        path (str): Path of the documentation file inside the dataset volume.
+        chunk (str): Text chunk retrieved from the documentation.
 
     Returns:
-        str: Checkout URL string.
+        str: Reference with the file name and the first 200 characters of the chunk.
     """
-    from datetime import datetime, timedelta
-    from urllib.parse import urlencode
-
-    expiry_time = datetime.now() + timedelta(minutes=30)
-    params = {
-        "i": phone_id,
-        "q": valid_quantity,
-        "u": user_id,
-        "t": expiry_time
-    }
-    
-    # Return checkout URL
-    checkout_url = f"https://www.derar.cloud/checkout?{urlencode(params)}"
-    return checkout_url
+    file_name = path.rsplit("/", 1)[-1]
+    return f"{file_name}: {chunk[:200]}"
 
 # COMMAND ----------
 
-generate_checkout_url("derar@derar.cloud", 4, 2)
+build_reference(
+    "/Volumes/workspace/git-assistnat-agent/dataset/guias/01_comandos_fundamentales.md",
+    "git status muestra el estado de los archivos modificados, sin seguimiento y en staging.",
+)
 
 # COMMAND ----------
 
@@ -105,7 +72,7 @@ from unitycatalog.ai.core.databricks import DatabricksFunctionClient
 
 client = DatabricksFunctionClient()
 
-python_tool_uc_info = client.create_python_function(func=generate_checkout_url,
-                                                    catalog=course.catalog,
-                                                    schema=course.schema,
+python_tool_uc_info = client.create_python_function(func=build_reference,
+                                                    catalog=project.catalog,
+                                                    schema=project.schema,
                                                     replace=True)

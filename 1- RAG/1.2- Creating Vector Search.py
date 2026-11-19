@@ -20,13 +20,13 @@ else:
 
 # COMMAND ----------
 
-source_table_fullname = f"{course.catalog}.{course.schema}.gold_docs_chunked"
+source_table_fullname = f"{project.catalog}.{project.schema}.gold_docs_chunked"
 
-spark.sql(f"ALTER TABLE {source_table_fullname} SET TBLPROPERTIES (delta.enableChangeDataFeed = true)")
+spark.sql(f"ALTER TABLE `{project.catalog}`.`{project.schema}`.gold_docs_chunked SET TBLPROPERTIES (delta.enableChangeDataFeed = true)")
 
 # COMMAND ----------
 
-vs_index_fullname = f"{course.catalog}.{course.schema}.git_vs_index"
+vs_index_fullname = f"{project.catalog}.{project.schema}.git_vs_index"
 
 if not vs_client.index_exists(vs_endpoint_name, vs_index_fullname):
   vs_index = vs_client.create_delta_sync_index_and_wait(
@@ -118,7 +118,7 @@ display(reranked_passages)
 
 from flashrank import Ranker, RerankRequest
 
-cache_dir = f"{course.cache_volume}/flashrank"
+cache_dir = f"{project.cache_volume}/flashrank"
 ranker = Ranker(model_name="rank-T5-flan", cache_dir=cache_dir)
 
 docs = [

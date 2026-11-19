@@ -37,7 +37,7 @@ JSON:
 
 parsed_df = (bronze_df.withColumn("parsed_content",
                                   expr(f"""ai_parse_document(content, map("version", "2.0",
-                                                                          "imageOutputPath", "{course.dataset_volume}/imgs")
+                                                                          "imageOutputPath", "{project.dataset_volume}/imgs")
                                                             )"""))
                       .withColumn("plain_text",
                                   expr(f"""ai_query('{endpoint}',

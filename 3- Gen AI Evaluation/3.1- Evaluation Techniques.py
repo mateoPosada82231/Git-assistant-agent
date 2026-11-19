@@ -10,7 +10,7 @@
 
 import mlflow
 
-model_name = f"{course.catalog}.{course.schema}.dphone_agent"
+model_name = f"{project.catalog}.{project.schema}.git_agent"
 model_version = 1
 logged_model_uri = f"models:/{model_name}/{model_version}"
 
@@ -30,17 +30,17 @@ def predict_wrapper(query):
 
 # COMMAND ----------
 
-predict_wrapper("What is the storage capacity of dPhone D1 Pro?")
+predict_wrapper("How do I undo the last commit but keep the changes?")
 
 # COMMAND ----------
 
 eval_dataset = [
     {
-        "inputs": {'query': 'How to replace the battery of dPhone D1?'},
+        "inputs": {'query': 'How do I resolve a merge conflict?'},
         "expectations": None
     },
     {
-        "inputs": {'query': 'Explain how the dPhone D1 Pro is waterproof?'},
+        "inputs": {'query': 'What is the difference between git merge and git rebase?'},
         "expectations": None
     }
 ]
@@ -64,12 +64,12 @@ eval_results = mlflow.genai.evaluate(
 
 eval_dataset_with_facts = [
     {
-        "inputs": {'query': 'What models are available for the dPhone D1?'},
-        "expectations":  {"expected_facts": ["D1 Lite", "D1 Pro", "D1 Fold", "D1"]}
+        "inputs": {'query': 'Which git commands are used to save work temporarily?'},
+        "expectations":  {"expected_facts": ["git stash push", "git stash pop"]}
     },
     {
-        "inputs": {'query': 'What kind of display does the dPhone D1 Fold have?'},
-        "expectations": {'expected_response': '10.1" Super-AMOLED "Infinity" Display'}
+        "inputs": {'query': 'What does git status show?'},
+        "expectations": {'expected_response': 'modified files, untracked files, and staged files'}
     }
 ]
 
@@ -106,21 +106,20 @@ tone_guidelines = Guidelines(
 )
 
 compliance_guidelines = Guidelines(
-    name="policy_compliance",
+    name="git_accuracy",
     guidelines=[
-        """Pricing policies:
-        - The response must not offer any discounts or promotional deals
-        - The response must not negotiate prices with customers
-        - The response must not guarantee future price changes""",
+        """Accuracy:
+        - The response must be based on the provided Git documentation
+        - The response must not invent commands or flags that do not exist in Git
+        - The response must warn the user before recommending destructive commands""",
 
-        """Data privacy and security:
-        - The response must never ask for credit card numbers, SSN, or passwords
-        - The response must not reference other customers' orders or information
-        - The response must not direct users to outside the company website (derar.cloud)""",
+        """Safety:
+        - The response must never ask for passwords, tokens, or SSH private keys
+        - The response must not encourage committing secrets to a repository""",
 
-        """Commitment limitations:
-        - The response must not make commitments about future model releases
-        - For out-of-stock items, the response must not commit to restock dates"""
+        """Scope:
+        - The response must stay focused on Git and version control topics
+        - The response must not answer unrelated questions"""
     ],
     model="databricks:/databricks-gpt-oss-120b"
 )
@@ -145,7 +144,7 @@ eval_results.result_df
 
 # COMMAND ----------
 
-model_name = f"{course.catalog}.{course.schema}.dphone_agent"
+model_name = f"{project.catalog}.{project.schema}.git_agent"
 #model_version = 2
 #logged_model_uri = f"models:/{model_name}/{model_version}"
 model_alias = "challenger"
