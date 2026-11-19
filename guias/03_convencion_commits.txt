@@ -1,0 +1,55 @@
+ESTANDAR DE MENSAJES DE COMMIT (CONVENTIONAL COMMITS)
+
+1. ESTRUCTURA OBLIGATORIA
+Todo mensaje de commit debe seguir el formato:
+<tipo>(<alcance opcional>): <descripcion breve en imperativo>
+
+Ejemplo:
+feat(auth): agregar autenticacion con token JWT
+
+2. TIPOS DE COMMIT PERMITIDOS
+- feat: Nueva funcionalidad visible para el usuario o sistema.
+- fix: Correccion de un error o bug en el codigo.
+- docs: Cambios exclusivamente en documentacion (README, comentarios, guias).
+- style: Cambios de formato (espacios, punto y coma, indentacion) que no alteran la logica.
+- refactor: Reestructuracion de codigo que no corrige un bug ni agrega una funcionalidad.
+- test: Agregar o corregir pruebas unitarias o de integracion.
+- chore: Tareas de mantenimiento, actualizacion de dependencias o configuracion de build.
+
+3. REGLAS DE REDACCION
+- Usa verbo en modo imperativo en espanol o ingles consistente (ej. "agregar", "corregir", "eliminar", no "agregado" ni "corrigiendo").
+- No termines la linea de titulo con punto final.
+- Limita el titulo a un maximo de 50 caracteres.
+- Si necesitas explicar el "por que" del cambio, deja una linea en blanco despues del titulo y escribe un cuerpo detallado (maximo 72 caracteres por linea).
+- Realiza commits atomicos: cada commit debe representar un unico cambio logico completo.
+
+4. TIPOS ADICIONALES (EXTENDIDOS)
+- perf: Mejora de rendimiento sin cambiar funcionalidad.
+- ci: Cambios en configuracion de CI/CD (GitHub Actions, etc.).
+- build: Cambios en sistema de build o dependencias externas.
+- revert: Revierte un commit anterior.
+- (Los tipos base son: feat, fix, docs, style, refactor, test, chore)
+
+5. BREAKING CHANGES
+Si un commit introduce un cambio incompatible, agrega "!" despues del tipo o un footer "BREAKING CHANGE:":
+  feat(api)!: cambiar formato de respuesta de usuarios
+  o en el cuerpo:
+  BREAKING CHANGE: el campo "name" ahora se llama "fullName"
+
+6. FOOTERS (OPCIONALES)
+- Closes #123  -> vincula y cierra un issue de GitHub.
+- Refs #456    -> referencia un issue sin cerrarlo.
+- Co-authored-by: Nombre <email> -> para pair programming.
+
+7. EJEMPLOS CORRECTOS VS INCORRECTOS
+[CORRECTO] fix(pagos): validar saldo insuficiente antes de procesar cobro
+[INCORRECTO] arreglo bug en pagos
+
+[CORRECTO] docs(api): actualizar ejemplos de respuesta en endpoint de usuarios
+[INCORRECTO] cambios varios en readme
+
+[CORRECTO] refactor(db): extraer logica de conexion a modulo independiente
+[INCORRECTO] wip final ahora si funciona
+
+[CORRECTO] feat(api)!: cambiar respuesta de /users a formato paginado
+[CORRECTO] perf(db): agregar indice en columna email para acelerar busquedas
