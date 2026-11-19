@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %run ../Includes/Lab_Setup
 
 # COMMAND ----------
@@ -8,56 +12,50 @@ display(bronze_df)
 
 # COMMAND ----------
 
+# DBTITLE 1,Vista previa del texto decodificado
 # MAGIC %sql
-# MAGIC WITH parsed_docs AS (
-# MAGIC   SELECT path,
-# MAGIC         ai_parse_document(content, map('version', '2.0')) as parsed_content
-# MAGIC   FROM bronze_docs_raw
-# MAGIC )
+# MAGIC -- Los documentos son .md, .txt y .csv: ya son texto, no necesitan parseo estructurado.
+# MAGIC -- Se decodifican directamente a texto plano (UTF-8).
 # MAGIC SELECT path,
-# MAGIC       parsed_content,
-# MAGIC       ai_query('databricks-gpt-oss-20b',
-# MAGIC                CONCAT('Given a JSON object representing a parsed document (with pages, elements, and metadata), convert the content into clean, readable markdown. Use "== page ==" to separate each page without adding page number. Preserve important structure such as pages, headers, tables, and captions. Do not include any JSON or code blocks in the output—just the clean markdown text.
-# MAGIC                JSON:', CAST(parsed_content AS STRING))
-# MAGIC               )
-# MAGIC FROM parsed_docs
+# MAGIC        decode(content, 'UTF-8') AS raw_text
+# MAGIC FROM bronze_docs_raw
 
 # COMMAND ----------
 
-from pyspark.sql.functions import expr
+# DBTITLE 1,Silver: texto plano directo + CSV a markdown
+from pyspark.sql.functions import col, lit, decode, when, concat, expr
 
 endpoint = "databricks-gpt-oss-20b"
 
-prompt_prefix = '''
-You are a helpful assistant. Given a JSON object representing a parsed document (with pages, elements, and metadata), convert the content into clean, readable markdown. Use "== page ==" to separate each page without adding page number. Preserve important structure such as pages, headers, tables, and captions. Do not include any JSON or code blocks in the output—just the clean markdown text.
+# .md y .txt ya son texto legible: se decodifican directo, sin LLM.
+# Solo el .csv se convierte a tabla markdown para facilitar el chunking.
+csv_prompt = concat(
+    lit("The following is the raw content of a CSV file. Convert it into a clean markdown table: "),
+    lit("use the first row as the header and preserve every row and value exactly. "),
+    lit("Output only the markdown table, with no explanations and no code fences.\n\nCSV:\n\n")
+)
 
-JSON:
-
-'''
-
-parsed_df = (bronze_df.withColumn("parsed_content",
-                                  expr(f"""ai_parse_document(content, map("version", "2.0",
-                                                                          "imageOutputPath", "{project.dataset_volume}/imgs")
-                                                            )"""))
-                      .withColumn("plain_text",
-                                  expr(f"""ai_query('{endpoint}',
-                                                    CONCAT('{prompt_prefix}', CAST(parsed_content AS STRING)),
-                                                    responseFormat => '{{"type":"text"}}'
-                                                  )"""))
-                      .select("path", "parsed_content", "plain_text")
+parsed_df = (bronze_df
+              .withColumn("csv_prompt", csv_prompt)
+              .withColumn("plain_text",
+                          when(col("path").endswith(".csv"),
+                               expr(f"""ai_query('{endpoint}',
+                                                 CONCAT(csv_prompt, decode(content, 'UTF-8')),
+                                                 responseFormat => '{{"type":"text"}}')"""))
+                          .otherwise(decode(col("content"), "UTF-8")))
+              .select("path", "plain_text")
             )
 
 display(parsed_df)
 
 # COMMAND ----------
 
-import sys, os
-sys.path.append(os.path.abspath('../Includes'))
-from document_renderer import render_ai_parse_output, render_ai_parse_output_interactive
-
-sample = parsed_df.select("parsed_content").limit(1).collect()
-doc = sample[0]["parsed_content"]
-render_ai_parse_output(doc)
+# DBTITLE 1,Verificación del CSV convertido
+# Verificación: el único documento convertido por el LLM debe ser el CSV,
+# y debe salir como tabla markdown legible.
+sample = parsed_df.filter(col("path").endswith(".csv")).collect()
+print(sample[0]["path"])
+print(sample[0]["plain_text"])
 
 # COMMAND ----------
 

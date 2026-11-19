@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %pip install --quiet --upgrade databricks-vectorsearch flashrank
 # MAGIC %restart_python
 
@@ -99,18 +103,28 @@ display(passages_filtered)
 
 # COMMAND ----------
 
-from databricks.vector_search.reranker import DatabricksReranker
+from flashrank.Ranker import Ranker, RerankRequest
 
 query_5 = "How do I configure SSH authentication for GitHub?"
 
-results_reranked = vs_index.similarity_search(
+ranker = Ranker()
+
+results_initial = vs_index.similarity_search(
     query_text=query_5,
     columns=["path", "chunk"],
-    num_results=4,
-    reranker=DatabricksReranker(columns_to_rerank=["chunk"])
+    num_results=10,
 )
 
-reranked_passages = results_reranked.get("result", {}).get("data_array", [])
+candidates = results_initial.get("result", {}).get("data_array", [])
+
+rerank_request = RerankRequest(
+    query=query_5,
+    passages=[{"id": i, "text": row[1]} for i, row in enumerate(candidates)],
+)
+
+ranked = ranker.rerank(rerank_request)
+
+reranked_passages = [candidates[r["id"]] for r in ranked[:4]]
 
 display(reranked_passages)
 
